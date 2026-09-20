@@ -88,7 +88,7 @@ final class StatusBarController: NSObject {
         loginItem.target = self
         loginItem.state = loginService.isEnabled ? .on : .off
         menu.addItem(loginItem)
-        let languageItem = NSMenuItem(title: "Language / 언어", action: nil, keyEquivalent: "")
+        let languageItem = NSMenuItem(title: "Language", action: nil, keyEquivalent: "")
         let languageMenu = NSMenu()
         let current = languageService.selection
         let options: [(AppLanguage, String)] = [(.system, "System Default"), (.korean, "한국어"), (.english, "English")]

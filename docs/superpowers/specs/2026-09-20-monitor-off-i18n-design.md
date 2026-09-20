@@ -24,7 +24,7 @@ Base spec: `docs/superpowers/specs/2026-09-20-monitor-off-design.md`
 
 - `Sources/MonitorOffKit/L10n.swift` (new): `enum L10nKey { sleepNow, launchAtLogin, quit, sleepFailedTitle, loginFailedTitle }`, `enum AppLanguage { system, korean, english }`, ko/en 테이블, `L10n.string(_ key: L10nKey, language: AppLanguage.Resolved) -> String`.
 - `Sources/MonitorOffKit/LanguageService.swift` (new): `UserDefaults` key `appLanguage` 저장, `effectiveLanguage()` — `.system`이면 `Locale.preferredLanguages` 첫 항목이 `ko`로 시작하면 한국어, 아니면 영어. 주입 가능한 UserDefaults + Locale로 테스트.
-- `Sources/MonitorOff/StatusBarController.swift` (modify): 하드코딩 5곳을 `L10n` 조회로 교체. 메뉴에 `Language / 언어` 서브메뉴 (radio: System Default / 한국어 / English) 추가. 선택 시 저장, 다음 메뉴 오픈부터 반영.
+- `Sources/MonitorOff/StatusBarController.swift` (modify): 하드코딩 5곳을 `L10n` 조회로 교체. 메뉴에 `Language` 서브메뉴 (radio: System Default / 한국어 / English) 추가. 선택 시 저장, 다음 메뉴 오픈부터 반영.
 
 ## 5. String Table
 
@@ -36,7 +36,7 @@ Base spec: `docs/superpowers/specs/2026-09-20-monitor-off-design.md`
 | sleepFailedTitle | 대기모드 전환 실패 | Failed to Sleep Display |
 | loginFailedTitle | 자동 실행 설정 실패 | Failed to Set Login Item |
 
-서브메뉴 라벨은 언어중립 고정 `Language / 언어`. 서브메뉴 항목 라벨은 `System Default`, `한국어`, `English` 고정 (언어 선택 UI 관례).
+서브메뉴 라벨은 `Language` 고정. 서브메뉴 항목 라벨은 `System Default`, `한국어`, `English` 고정 (언어 선택 UI 관례).
 
 ## 6. Data Flow
 
