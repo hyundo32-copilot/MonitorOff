@@ -25,8 +25,11 @@ final class L10nTests: XCTestCase {
         XCTAssertEqual(L10n.string(.loginFailedTitle, language: .english), "Failed to Set Login Item")
     }
 
-    private func service(languages: [String], stored: String? = nil) -> LanguageService {
-        let defaults = UserDefaults(suiteName: #function)!
+    private func service(languages: [String], stored: String? = nil, suite: String = #function) -> LanguageService {
+        guard let defaults = UserDefaults(suiteName: "L10nTests.\(suite)") else {
+            XCTFail("Could not create UserDefaults suite")
+            return LanguageService(defaults: .standard, preferredLanguages: languages)
+        }
         defaults.removeObject(forKey: LanguageService.storageKey)
         if let stored { defaults.set(stored, forKey: LanguageService.storageKey) }
         return LanguageService(defaults: defaults, preferredLanguages: languages)
@@ -50,8 +53,19 @@ final class L10nTests: XCTestCase {
         XCTAssertEqual(service(languages: ["ko-KR"], stored: "system").effectiveLanguage(), .korean)
     }
 
+    func test_corrupt_stored_value_falls_back_to_system() {
+        XCTAssertEqual(service(languages: ["ko-KR"], stored: "bogus").effectiveLanguage(), .korean)
+    }
+
+    func test_non_ko_non_en_locale_resolves_english() {
+        XCTAssertEqual(service(languages: ["ja-JP"]).effectiveLanguage(), .english)
+    }
+
     func test_setSelection_roundtrip() {
-        let defaults = UserDefaults(suiteName: #function)!
+        guard let defaults = UserDefaults(suiteName: "L10nTests.\(#function)") else {
+            XCTFail("Could not create UserDefaults suite")
+            return
+        }
         defaults.removeObject(forKey: LanguageService.storageKey)
         let service = LanguageService(defaults: defaults, preferredLanguages: ["en-US"])
         XCTAssertEqual(service.selection, .system)
