@@ -1,8 +1,10 @@
 import AppKit
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    private var bar: StatusBarController?
+
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // Task 5에서 StatusBarController 연결. 지금은 껍데기만.
+        bar = StatusBarController()
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
