@@ -1,5 +1,5 @@
 import XCTest
-@testable import MonitorOff
+@testable import MonitorOffKit
 
 final class FakeBackend: AppServiceBackend {
     var isRegistered = false

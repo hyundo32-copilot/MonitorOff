@@ -1,5 +1,5 @@
 import XCTest
-@testable import MonitorOff
+@testable import MonitorOffKit
 
 final class ClickDiscriminatorTests: XCTestCase {
     func test_first_click_returns_nil_pending() {

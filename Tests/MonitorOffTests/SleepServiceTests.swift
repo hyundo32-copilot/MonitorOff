@@ -1,5 +1,5 @@
 import XCTest
-@testable import MonitorOff
+@testable import MonitorOffKit
 
 final class SleepServiceTests: XCTestCase {
     func test_sleep_invokes_pmset_displaysleepnow() throws {

@@ -1,4 +1,5 @@
 import AppKit
+import MonitorOffKit
 
 @MainActor
 final class StatusBarController: NSObject {
@@ -27,9 +28,10 @@ final class StatusBarController: NSObject {
     private func configureButton() {
         guard let button = statusItem.button else { return }
         button.image = NSImage(systemSymbolName: "moon.fill", accessibilityDescription: "Monitor Off")
+        button.image?.isTemplate = true
         button.target = self
         button.action = #selector(handleStatusButtonAction(_:))
-        button.sendAction(on: [.leftMouseDown, .leftMouseUp])
+        button.sendAction(on: [.leftMouseUp])
     }
 
     @objc private func handleStatusButtonAction(_ sender: Any?) {
@@ -48,7 +50,7 @@ final class StatusBarController: NSObject {
             Task { @MainActor in
                 let result = self.discriminator.timeout()
                 self.pendingTimer = nil
-                if result == .single {
+                if result == .some(.single) {
                     self.showMenu()
                 }
             }
@@ -57,9 +59,9 @@ final class StatusBarController: NSObject {
 
     private func performSleep() {
         if Date().timeIntervalSince(lastSleepAt) < 1.0 { return }
-        lastSleepAt = Date()
         do {
             try onSleep()
+            lastSleepAt = Date()
         } catch {
             NSLog("MonitorOff sleep failed: \(error)")
             let alert = NSAlert()
@@ -83,10 +85,6 @@ final class StatusBarController: NSObject {
         let quitItem = NSMenuItem(title: "종료", action: #selector(quitMenuAction), keyEquivalent: "q")
         quitItem.target = self
         menu.addItem(quitItem)
-        statusItem.button?.performClick(nil)
-        statusItem.menu = menu
-        statusItem.button?.performClick(nil)
-        statusItem.menu = nil
         menu.popUp(positioning: nil, at: NSEvent.mouseLocation, in: nil)
     }
 

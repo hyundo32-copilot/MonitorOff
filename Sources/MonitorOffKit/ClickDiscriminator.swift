@@ -1,19 +1,19 @@
 import Foundation
 
-enum ClickOutcome: Equatable {
+public enum ClickOutcome: Equatable {
     case single
     case double
 }
 
-struct ClickDiscriminator {
-    let interval: TimeInterval
+public struct ClickDiscriminator {
+    public let interval: TimeInterval
     private var pendingDate: Date?
 
-    init(interval: TimeInterval = 0.28) {
+    public init(interval: TimeInterval = 0.28) {
         self.interval = interval
     }
 
-    mutating func click(at date: Date) -> ClickOutcome? {
+    public mutating func click(at date: Date) -> ClickOutcome? {
         guard let pending = pendingDate else {
             pendingDate = date
             return nil
@@ -26,7 +26,8 @@ struct ClickDiscriminator {
         return nil
     }
 
-    mutating func timeout() -> ClickOutcome {
+    public mutating func timeout() -> ClickOutcome? {
+        guard pendingDate != nil else { return nil }
         pendingDate = nil
         return .single
     }

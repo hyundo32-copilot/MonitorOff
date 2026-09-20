@@ -5,13 +5,18 @@ let package = Package(
     name: "MonitorOff",
     platforms: [.macOS(.v13)],
     targets: [
+        .target(
+            name: "MonitorOffKit",
+            path: "Sources/MonitorOffKit"
+        ),
         .executableTarget(
             name: "MonitorOff",
+            dependencies: ["MonitorOffKit"],
             path: "Sources/MonitorOff"
         ),
         .testTarget(
             name: "MonitorOffTests",
-            dependencies: ["MonitorOff"],
+            dependencies: ["MonitorOffKit"],
             path: "Tests/MonitorOffTests"
         ),
     ]
