@@ -2,6 +2,10 @@
 
 A tiny macOS menu bar app that puts your display to sleep.
 
+Made for Macs that run 24/7 as an agent server while doubling as a personal PC:
+when you're done using it as a PC, double-click the icon and only the display
+sleeps — background agent work keeps running.
+
 ## Usage
 
 - **Double-click** the menu bar icon → display sleeps immediately (system keeps running)
