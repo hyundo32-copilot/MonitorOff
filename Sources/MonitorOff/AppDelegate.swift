@@ -7,6 +7,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         bar = StatusBarController()
     }
 
+    func applicationWillTerminate(_ notification: Notification) {
+        bar?.restoreOnExit()
+    }
+
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         return false
     }

@@ -3,6 +3,7 @@ import Foundation
 public enum L10nKey: String, CaseIterable {
     case sleepNow
     case launchAtLogin
+    case muteOnDisplaySleep
     case quit
     case sleepFailedTitle
     case loginFailedTitle
@@ -26,6 +27,8 @@ public enum L10n {
         case (.sleepNow, .english): return "Sleep Display Now"
         case (.launchAtLogin, .korean): return "로그인 시 자동 실행"
         case (.launchAtLogin, .english): return "Open at Login"
+        case (.muteOnDisplaySleep, .korean): return "화면 꺼지면 소리 끄기"
+        case (.muteOnDisplaySleep, .english): return "Mute sound when display sleeps"
         case (.quit, .korean): return "종료"
         case (.quit, .english): return "Quit"
         case (.sleepFailedTitle, .korean): return "대기모드 전환 실패"

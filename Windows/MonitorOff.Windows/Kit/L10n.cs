@@ -4,6 +4,7 @@ public enum L10nKey
 {
     SleepNow,
     LaunchAtLogin,
+    MuteOnDisplaySleep,
     Quit,
     SleepFailedTitle,
     LoginFailedTitle,
@@ -19,6 +20,8 @@ public static class L10n
         (L10nKey.SleepNow, ResolvedLanguage.English) => "Sleep Display Now",
         (L10nKey.LaunchAtLogin, ResolvedLanguage.Korean) => "로그인 시 자동 실행",
         (L10nKey.LaunchAtLogin, ResolvedLanguage.English) => "Open at Login",
+        (L10nKey.MuteOnDisplaySleep, ResolvedLanguage.Korean) => "화면 꺼지면 소리 끄기",
+        (L10nKey.MuteOnDisplaySleep, ResolvedLanguage.English) => "Mute sound when display sleeps",
         (L10nKey.Quit, ResolvedLanguage.Korean) => "종료",
         (L10nKey.Quit, ResolvedLanguage.English) => "Quit",
         (L10nKey.SleepFailedTitle, ResolvedLanguage.Korean) => "대기모드 전환 실패",

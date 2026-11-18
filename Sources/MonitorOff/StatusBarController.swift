@@ -4,11 +4,14 @@ import MonitorOffKit
 @MainActor
 final class StatusBarController: NSObject {
     static let doubleClickInterval: TimeInterval = 0.28
+    static let muteStorageKey = "muteOnDisplaySleep"
 
     private let statusItem: NSStatusItem
     private let onSleep: () throws -> Void
     private let loginService: LoginItemService
     private let languageService: LanguageService
+    private let defaults: UserDefaults
+    private let muteController: DisplayMuteController
     private var discriminator = ClickDiscriminator(interval: doubleClickInterval)
     private var pendingTimer: Timer?
     private var lastSleepAt = Date.distantPast
@@ -17,15 +20,44 @@ final class StatusBarController: NSObject {
         statusItem: NSStatusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength),
         sleepService: SleepService = SleepService(),
         loginService: LoginItemService = LoginItemService(),
-        languageService: LanguageService = LanguageService()
+        languageService: LanguageService = LanguageService(),
+        defaults: UserDefaults = .standard,
+        audioMuter: AudioMuting = AppleScriptAudioMuter()
     ) {
         self.statusItem = statusItem
         let service = sleepService
         self.onSleep = { try service.sleep() }
         self.loginService = loginService
         self.languageService = languageService
+        self.defaults = defaults
+        // 키가 없으면 기본 켜짐.
+        let muteEnabled = (defaults.object(forKey: Self.muteStorageKey) as? Bool) ?? true
+        self.muteController = DisplayMuteController(
+            audio: audioMuter,
+            enabled: muteEnabled,
+            logger: { NSLog("%@", $0) }
+        )
         super.init()
         configureButton()
+        // MonitorOff가 끈 경우든 절전 타이머가 끈 경우든 화면 꺼짐/켜짐을 같이 받는다.
+        let center = NSWorkspace.shared.notificationCenter
+        center.addObserver(self, selector: #selector(screensDidSleep(_:)),
+                           name: NSWorkspace.screensDidSleepNotification, object: nil)
+        center.addObserver(self, selector: #selector(screensDidWake(_:)),
+                           name: NSWorkspace.screensDidWakeNotification, object: nil)
+    }
+
+    /// 앱 종료 시 우리가 걸어 둔 음소거를 되돌린다.
+    func restoreOnExit() {
+        muteController.restoreOnExit()
+    }
+
+    @objc private func screensDidSleep(_ note: Notification) {
+        muteController.onDisplaySleep()
+    }
+
+    @objc private func screensDidWake(_ note: Notification) {
+        muteController.onDisplayWake()
     }
 
     private func t(_ key: L10nKey) -> String {
@@ -88,6 +120,10 @@ final class StatusBarController: NSObject {
         loginItem.target = self
         loginItem.state = loginService.isEnabled ? .on : .off
         menu.addItem(loginItem)
+        let muteItem = NSMenuItem(title: t(.muteOnDisplaySleep), action: #selector(muteMenuAction(_:)), keyEquivalent: "")
+        muteItem.target = self
+        muteItem.state = muteController.enabled ? .on : .off
+        menu.addItem(muteItem)
         let languageItem = NSMenuItem(title: "Language", action: nil, keyEquivalent: "")
         let languageMenu = NSMenu()
         let current = languageService.selection
@@ -123,6 +159,13 @@ final class StatusBarController: NSObject {
             alert.informativeText = "\(error)"
             alert.runModal()
         }
+    }
+
+    @objc private func muteMenuAction(_ sender: NSMenuItem) {
+        let newValue = !muteController.enabled
+        defaults.set(newValue, forKey: Self.muteStorageKey)
+        muteController.setEnabled(newValue)  // 끄는 시점에 우리가 건 음소거면 즉시 복원
+        sender.state = newValue ? .on : .off
     }
 
     @objc private func languageMenuAction(_ sender: NSMenuItem) {

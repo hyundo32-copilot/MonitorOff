@@ -9,6 +9,7 @@ namespace MonitorOff;
 public sealed class TrayApplicationContext : ApplicationContext
 {
     public const double DoubleClickInterval = 0.28;
+    public const string MuteStorageKey = "muteOnDisplaySleep";
 
     private static readonly (AppLanguage Language, string Label)[] LanguageOptions =
     {
@@ -21,11 +22,15 @@ public sealed class TrayApplicationContext : ApplicationContext
     private readonly LoginItemService _loginService;
     private readonly LanguageService _languageService;
     private readonly ISystemAwakeService _awakeService;
+    private readonly ISettingsStore _settingsStore;
+    private readonly DisplayMuteController _muteController;
+    private readonly DisplayPowerNotifier _powerNotifier;
 
     private readonly NotifyIcon _notifyIcon;
     private readonly ContextMenuStrip _menu;
     private readonly ToolStripMenuItem _sleepItem;
     private readonly ToolStripMenuItem _loginItem;
+    private readonly ToolStripMenuItem _muteItem;
     private readonly ToolStripMenuItem _languageItem;
     private readonly ToolStripMenuItem _quitItem;
     private readonly System.Windows.Forms.Timer _pendingTimer;
@@ -37,11 +42,15 @@ public sealed class TrayApplicationContext : ApplicationContext
         SleepService? sleepService = null,
         LoginItemService? loginService = null,
         LanguageService? languageService = null,
-        ISystemAwakeService? awakeService = null)
+        ISystemAwakeService? awakeService = null,
+        ISettingsStore? settingsStore = null,
+        IAudioMuter? audioMuter = null)
     {
+        // 같은 파일을 가리키는 저장소가 둘이면 서로의 키를 덮어쓰므로 하나를 공유한다.
+        _settingsStore = settingsStore ?? new JsonFileSettingsStore();
         _sleepService = sleepService ?? new SleepService();
         _loginService = loginService ?? new LoginItemService();
-        _languageService = languageService ?? new LanguageService();
+        _languageService = languageService ?? new LanguageService(_settingsStore);
         _awakeService = awakeService ?? new SystemAwakeService();
 
         _sleepItem = new ToolStripMenuItem
@@ -53,6 +62,15 @@ public sealed class TrayApplicationContext : ApplicationContext
 
         _loginItem = new ToolStripMenuItem { CheckOnClick = false };
         _loginItem.Click += (_, _) => ToggleLoginItem();
+
+        // 값이 없으면 기본 켜짐.
+        var muteEnabled = !string.Equals(_settingsStore.Get(MuteStorageKey), "false", StringComparison.OrdinalIgnoreCase);
+        _muteController = new DisplayMuteController(
+            audioMuter ?? new SystemAudioMuter(),
+            muteEnabled,
+            message => System.Diagnostics.Trace.WriteLine(message));
+        _muteItem = new ToolStripMenuItem { CheckOnClick = false };
+        _muteItem.Click += (_, _) => ToggleMute();
 
         _languageItem = BuildLanguageMenu();
 
@@ -69,6 +87,7 @@ public sealed class TrayApplicationContext : ApplicationContext
             _sleepItem,
             new ToolStripSeparator(),
             _loginItem,
+            _muteItem,
             _languageItem,
             new ToolStripSeparator(),
             _quitItem,
@@ -91,6 +110,18 @@ public sealed class TrayApplicationContext : ApplicationContext
 
         LocalizeMenu();
         PreventSystemSleep();
+
+        _powerNotifier = new DisplayPowerNotifier(isOn =>
+        {
+            if (isOn)
+            {
+                _muteController.OnDisplayWake();
+            }
+            else
+            {
+                _muteController.OnDisplaySleep();
+            }
+        });
     }
 
     /// <summary>
@@ -113,6 +144,8 @@ public sealed class TrayApplicationContext : ApplicationContext
     {
         if (disposing)
         {
+            _powerNotifier.Dispose();
+            _muteController.RestoreOnExit();
             _pendingTimer.Dispose();
             _notifyIcon.Visible = false;
             _notifyIcon.Dispose();
@@ -147,6 +180,8 @@ public sealed class TrayApplicationContext : ApplicationContext
         _sleepItem.Text = T(L10nKey.SleepNow);
         _loginItem.Text = T(L10nKey.LaunchAtLogin);
         _loginItem.Checked = _loginService.IsEnabled;
+        _muteItem.Text = T(L10nKey.MuteOnDisplaySleep);
+        _muteItem.Checked = _muteController.Enabled;
         _languageItem.Text = "Language";
         _quitItem.Text = T(L10nKey.Quit);
 
@@ -220,6 +255,14 @@ public sealed class TrayApplicationContext : ApplicationContext
         {
             MessageBox.Show(ex.Message, T(L10nKey.LoginFailedTitle), MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
+    }
+
+    private void ToggleMute()
+    {
+        var newValue = !_muteController.Enabled;
+        _settingsStore.Set(MuteStorageKey, newValue ? "true" : "false");
+        _muteController.SetEnabled(newValue); // 끄는 시점에 우리가 건 음소거면 즉시 복원
+        _muteItem.Checked = newValue;
     }
 
     private void Quit()

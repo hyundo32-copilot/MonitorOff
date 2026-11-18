@@ -14,8 +14,24 @@ Identical on both platforms:
 - **Single-click** → menu with:
   - Sleep Display Now (`Cmd+D` / `Ctrl+D`)
   - Open at Login (toggle)
+  - Mute sound when display sleeps (toggle, on by default)
   - Language submenu (System Default / 한국어 / English)
   - Quit (`Cmd+Q` / `Ctrl+Q`)
+
+## Mute while the display is off
+
+With **Mute sound when display sleeps** enabled (the default), the system output
+is muted as soon as the display turns off and unmuted when it turns back on, so a
+push notification can't make noise while the screen stays dark. It reacts to the
+OS display-sleep/wake notification, so it applies whether MonitorOff or the
+idle timer turned the display off, and moving the mouse to wake the screen
+brings the sound back. The app remembers the previous state: if the output was
+already muted before the display went off, it is left alone and not unmuted
+afterwards — only a mute MonitorOff applied is undone (also when you turn the
+toggle off, or quit the app). Failures to mute are logged silently, never shown.
+
+**Known limitation:** this is a full system mute, so music and phone ringtones
+are silenced too. If a call wakes the display, sound returns from that moment.
 
 ## Build & Run
 
@@ -48,7 +64,9 @@ Windows 10+ x64 machine without a .NET install.
 | Keep the system awake | user power settings | `SetThreadExecutionState(ES_CONTINUOUS \| ES_SYSTEM_REQUIRED)` |
 | Tray icon | `NSStatusItem` | `NotifyIcon` (icon drawn in code — see `MoonIcon.cs`) |
 | Open at Login | `SMAppService` | `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` |
-| Language prefs | `UserDefaults` | `%LOCALAPPDATA%\MonitorOff\settings.json` |
+| Display sleep/wake detection | `NSWorkspace.screensDidSleep/WakeNotification` | `RegisterPowerSettingNotification(GUID_MONITOR_POWER_ON)` |
+| Mute output | `osascript` (`set volume output muted`) | Core Audio `IAudioEndpointVolume::SetMute` |
+| Settings (language, mute toggle) | `UserDefaults` | `%LOCALAPPDATA%\MonitorOff\settings.json` |
 | No Dock / taskbar icon | `LSUIElement` | no top-level window is ever created |
 
 Turning off the display never suspends the machine: processes, downloads and
@@ -70,7 +88,7 @@ swift test   # requires full Xcode (XCTest)
 ## Layout
 
 - `Sources/MonitorOff/` — AppDelegate, StatusBarController (macOS menu bar UI)
-- `Sources/MonitorOffKit/` — SleepService, ClickDiscriminator, LoginItemService, L10n, LanguageService
+- `Sources/MonitorOffKit/` — SleepService, ClickDiscriminator, LoginItemService, DisplayMuteController, AppleScriptAudioMuter, L10n, LanguageService
 - `Tests/MonitorOffTests/` — unit tests
 - `Resources/Info.plist` — bundle config (`LSUIElement`, no Dock icon)
 - `Windows/MonitorOff.Windows/` — Windows port (`Kit/` mirrors `Sources/MonitorOffKit/`)
