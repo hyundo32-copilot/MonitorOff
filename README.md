@@ -6,6 +6,19 @@ Made for machines that run 24/7 as an agent server while doubling as a personal
 PC: when you're done using it as a PC, double-click the icon and only the display
 sleeps — background agent work keeps running.
 
+## Download
+
+Built files are published on the [Releases](https://github.com/hyundo32-copilot/MonitorOff/releases) page: `MonitorOff-macOS.zip` (`.app` inside) and `MonitorOff-Windows.zip` (`MonitorOff.exe` inside). They are built by GitHub Actions (`.github/workflows/release.yml`) whenever a `v*` tag is pushed.
+
+To cut a release:
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+Note: the macOS app is not signed or notarized, so on first launch macOS may warn about an unidentified developer — right-click the app and choose Open.
+
 ## Usage
 
 Identical on both platforms:

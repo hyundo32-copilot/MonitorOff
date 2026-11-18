@@ -1,0 +1,66 @@
+# Release — 태그(v*)를 push하면 macOS .app과 Windows .exe를 빌드해
+# GitHub Release에 올린다. 수동 실행(workflow_dispatch)은 빌드만 하고
+# Release는 만들지 않는다 (아티팩트로 결과 확인용).
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        include:
+          - os: macOS
+            runner: macos-latest
+          - os: Windows
+            runner: windows-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      # macOS: 단위 테스트를 먼저 돌리고(실패하면 릴리스 중단) 앱을 만든다.
+      - name: Test (macOS)
+        if: matrix.os == 'macOS'
+        run: swift test
+
+      - name: Build app (macOS)
+        if: matrix.os == 'macOS'
+        run: bash scripts/make-app.sh
+
+      - name: Zip app (macOS)
+        if: matrix.os == 'macOS'
+        run: ditto -c -k --keepParent build/MonitorOff.app MonitorOff-macOS.zip
+
+      - name: Build exe (Windows)
+        if: matrix.os == 'Windows'
+        run: pwsh scripts/build-windows.ps1
+
+      - name: Zip exe (Windows)
+        if: matrix.os == 'Windows'
+        run: Compress-Archive -Path build/windows/MonitorOff.exe -DestinationPath MonitorOff-Windows.zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MonitorOff-${{ matrix.os }}
+          path: MonitorOff-${{ matrix.os }}.zip
+          if-no-files-found: error
+
+      # 태그 push일 때만 Release에 파일을 올린다.
+      # 양쪽 잡이 같은 태그로 부르면, 없으면 Release를 만들고 있으면 파일을 추가한다.
+      - name: Attach to Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: MonitorOff-${{ matrix.os }}.zip
+          fail_on_unmatched_files: true
+          generate_release_notes: true
