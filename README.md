@@ -17,7 +17,13 @@ git tag v0.1.0
 git push origin v0.1.0
 ```
 
-Note: the macOS app is not signed or notarized, so on first launch macOS may warn about an unidentified developer — right-click the app and choose Open.
+Note: the macOS app is not signed or notarized, so after downloading it macOS may refuse to open it with "'MonitorOff' is damaged and can't be opened". Fix it once in Terminal:
+
+```bash
+xattr -cr ~/Downloads/MonitorOff.app
+```
+
+then double-click the app. (If you download the zip with `curl` instead of a browser, macOS does not quarantine it and it opens directly.)
 
 ## Usage
 
